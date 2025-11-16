@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
@@ -24,21 +25,21 @@ export default function AdminVerifyEmailPage() {
   const verifyEmail = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/auth/admin/verify-email?token=${token}`
+        `https://cityreg.onrender.com/api/auth/admin/verify-email?token=${token}`
       );
       const data = await res.json();
 
       if (res.ok && data.success) {
         setStatus("success");
         setMessage(data.message || "Email verified successfully!");
-        
+
         setTimeout(() => {
           router.push("/admin/login");
         }, 2000);
       } else if (data.alreadyVerified) {
         setStatus("already-verified");
         setMessage(data.message || "Email already verified.");
-        
+
         setTimeout(() => {
           router.push("/admin/login");
         }, 2000);
@@ -121,7 +122,7 @@ export default function AdminVerifyEmailPage() {
                 Verification Failed
               </h2>
               <p className="text-gray-600 mb-6">{message}</p>
-              
+
               <div className="space-y-3">
                 <button
                   onClick={() => router.push("/admin/login")}
