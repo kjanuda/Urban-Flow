@@ -1,7 +1,7 @@
 'use client';
 
 import HomePage from "./Components/page";
-import Solve from "./Components/Solve/page";
+
 import Benifit from "./Components/Benifits/page"
 import Definition from "./Components/Definition/page"
 import Solution from "./Components/Solution/page"
