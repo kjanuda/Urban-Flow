@@ -20,7 +20,8 @@ function ResetPasswordForm() {
     }
   }, [token]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newPassword || !confirmPassword) {
       setMsg("❌ Please fill all fields");
       return;
@@ -63,7 +64,7 @@ function ResetPasswordForm() {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSubmit();
+      handleSubmit(e as any);
     }
   };
 
@@ -94,7 +95,7 @@ function ResetPasswordForm() {
           <p className="text-gray-600 mt-2">Enter your new password</p>
         </div>
 
-        <div className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Lock className="w-4 h-4" />
@@ -126,7 +127,7 @@ function ResetPasswordForm() {
           </div>
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading || !token}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
           >
@@ -142,7 +143,7 @@ function ResetPasswordForm() {
               </>
             )}
           </button>
-        </div>
+        </form>
 
         {msg && (
           <div
