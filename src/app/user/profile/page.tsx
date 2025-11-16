@@ -696,7 +696,7 @@ export default function IssueReporter() {
                   disabled={submitted || submitting}
                   placeholder="Describe the issue in detail..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                  rows="4"
+                  rows={4}
                 />
               </div>
 
