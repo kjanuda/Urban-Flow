@@ -3,11 +3,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
-interface MessageState {
-  text: string;
-  type: string;
-}
-
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,38 +10,34 @@ function ResetPasswordForm() {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [msg, setMsg] = useState<MessageState>({ text: "", type: "" });
+  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!token) {
-      setMsg({ text: "❌ Invalid reset link", type: "error" });
+      setMsg("❌ Invalid reset link");
     }
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMsg({ text: "", type: "" });
-
+  const handleSubmit = async () => {
     if (!newPassword || !confirmPassword) {
-      setMsg({ text: "❌ Please fill all fields", type: "error" });
-      setLoading(false);
+      setMsg("❌ Please fill all fields");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setMsg({ text: "❌ Passwords do not match", type: "error" });
-      setLoading(false);
+      setMsg("❌ Passwords do not match");
       return;
     }
 
     if (newPassword.length < 6) {
-      setMsg({ text: "❌ Password must be at least 6 characters", type: "error" });
-      setLoading(false);
+      setMsg("❌ Password must be at least 6 characters");
       return;
     }
+
+    setMsg("");
+    setLoading(true);
 
     try {
       const res = await fetch("https://cityreg.onrender.com/api/auth/admin/reset-password", {
@@ -58,21 +49,15 @@ function ResetPasswordForm() {
 
       if (res.ok) {
         setSuccess(true);
-        setMsg({ text: "✅ Password reset successful!", type: "success" });
+        setMsg("✅ Password reset successful!");
         setTimeout(() => router.push("/admin/login"), 2000);
       } else {
-        setMsg({ text: `❌ ${data.message || "Failed to reset password"}`, type: "error" });
+        setMsg(`❌ ${data.message || "Failed to reset password"}`);
       }
     } catch (err) {
-      setMsg({ text: "❌ Server error. Please try again.", type: "error" });
+      setMsg("❌ Server error. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSubmit(e as any);
     }
   };
 
@@ -103,7 +88,7 @@ function ResetPasswordForm() {
           <p className="text-gray-600 mt-2">Enter your new password</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-5">
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Lock className="w-4 h-4" />
@@ -115,7 +100,6 @@ function ResetPasswordForm() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              onKeyPress={handleKeyPress}
             />
           </div>
 
@@ -130,12 +114,11 @@ function ResetPasswordForm() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              onKeyPress={handleKeyPress}
             />
           </div>
 
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={loading || !token}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
           >
@@ -151,22 +134,22 @@ function ResetPasswordForm() {
               </>
             )}
           </button>
-        </form>
+        </div>
 
-        {msg.text && (
+        {msg && (
           <div
             className={`mt-4 p-3 rounded-lg text-sm font-medium flex items-start gap-2 ${
-              msg.type === "success"
+              msg.includes("✅")
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-700 border border-red-200"
             }`}
           >
-            {msg.type === "success" ? (
+            {msg.includes("✅") ? (
               <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             ) : (
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             )}
-            <span>{msg.text}</span>
+            <span>{msg}</span>
           </div>
         )}
       </div>
