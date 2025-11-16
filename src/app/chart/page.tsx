@@ -68,7 +68,7 @@ interface TimelineData {
 // Add a more flexible type for Recharts data
 type ChartData = Record<string, any>;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://city-process.onrender.com';
 
 const COLORS = {
   primary: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE'],
