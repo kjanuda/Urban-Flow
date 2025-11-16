@@ -65,7 +65,10 @@ interface TimelineData {
   reports: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://city-process.onrender.com';
+// Add a more flexible type for Recharts data
+type ChartData = Record<string, any>;
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 const COLORS = {
   primary: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE'],
@@ -443,11 +446,11 @@ export default function AnalyticsDashboard() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={statusData}
+                      data={statusData as ChartData[]}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                      label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -505,11 +508,11 @@ export default function AnalyticsDashboard() {
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
-                    data={cityData.slice(0, 8)}
+                    data={cityData.slice(0, 8) as ChartData[]}
                     cx="50%"
                     cy="50%"
                     labelLine={true}
-                    label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
@@ -553,11 +556,11 @@ export default function AnalyticsDashboard() {
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
-                    data={districtData.slice(0, 8)}
+                    data={districtData.slice(0, 8) as ChartData[]}
                     cx="50%"
                     cy="50%"
                     labelLine={true}
-                    label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
@@ -601,11 +604,11 @@ export default function AnalyticsDashboard() {
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
-                    data={provinceData}
+                    data={provinceData as ChartData[]}
                     cx="50%"
                     cy="50%"
                     labelLine={true}
-                    label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
