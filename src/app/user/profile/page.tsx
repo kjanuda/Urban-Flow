@@ -295,7 +295,7 @@ export default function IssueReporter() {
 
     searchBox.addListener('places_changed', () => {
       const places = searchBox.getPlaces();
-      if (places.length === 0) return;
+      if (!places || places.length === 0) return;
 
       const place = places[0];
       if (!place.geometry || !place.geometry.location) return;
