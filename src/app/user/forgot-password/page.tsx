@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, FormEvent, KeyboardEvent } from "react";
 import { Mail, AlertCircle, CheckCircle2, Lock, ArrowRight } from "lucide-react";
 import headerImage2 from '../../../../public/clm1.jpg';
 
@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMsg({ text: "", type: "" });
@@ -43,9 +43,9 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !loading) {
-      handleSubmit(e);
+      handleSubmit(e as unknown as FormEvent);
     }
   };
 
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
 
           {/* Form or Success State */}
           {!submitted ? (
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Input */}
               <div className="flex items-center border-2 border-gray-300 rounded-lg px-4 py-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-black focus-within:border-transparent transition">
                 <Mail className="w-4 h-4 text-gray-400 mr-2" />
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
 
               {/* Submit Button */}
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={loading}
                 className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-900 focus:ring-4 focus:ring-gray-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base mt-6"
               >
@@ -126,7 +126,7 @@ export default function ForgotPasswordPage() {
                   </>
                 )}
               </button>
-            </div>
+            </form>
           ) : (
             <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
