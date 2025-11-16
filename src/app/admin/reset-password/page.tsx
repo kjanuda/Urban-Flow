@@ -25,7 +25,7 @@ function ResetPasswordForm() {
     }
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMsg({ text: "", type: "" });
@@ -63,7 +63,7 @@ function ResetPasswordForm() {
       } else {
         setMsg({ text: `❌ ${data.message || "Failed to reset password"}`, type: "error" });
       }
-    } catch (err) {
+    } catch {
       setMsg({ text: "❌ Server error. Please try again.", type: "error" });
     } finally {
       setLoading(false);
@@ -168,11 +168,13 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   );
