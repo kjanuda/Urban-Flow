@@ -55,8 +55,8 @@ interface AreaData {
 }
 
 interface StatusData {
-  status: string;
-  count: number;
+  name: string;
+  value: number;
   percentage: number;
 }
 
@@ -65,7 +65,7 @@ interface TimelineData {
   reports: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://city-process.onrender.com';
 
 const COLORS = {
   primary: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE'],
@@ -218,8 +218,8 @@ export default function AnalyticsDashboard() {
     
     const statuses = Object.entries(statusCount)
       .map(([status, count]) => ({
-        status: status.charAt(0).toUpperCase() + status.slice(1),
-        count,
+        name: status.charAt(0).toUpperCase() + status.slice(1),
+        value: count,
         percentage: (count / total) * 100
       }));
     setStatusData(statuses);
@@ -447,10 +447,10 @@ export default function AnalyticsDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ status, percentage }) => `${status}: ${percentage.toFixed(1)}%`}
+                      label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
                       outerRadius={100}
                       fill="#8884d8"
-                      dataKey="count"
+                      dataKey="value"
                     >
                       {statusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS.primary[index % COLORS.primary.length]} />
