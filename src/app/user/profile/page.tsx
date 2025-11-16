@@ -238,7 +238,10 @@ export default function IssueReporter() {
   const createMap = () => {
     if (!mapRef.current || !window.google) return;
 
-    const initialLocation = location.lat ? { lat: location.lat, lng: location.lng } : defaultCenter;
+    // Ensure we have valid coordinates for the map center
+    const initialLocation = location.lat && location.lng 
+      ? { lat: location.lat, lng: location.lng } 
+      : defaultCenter;
 
     const map = new window.google.maps.Map(mapRef.current, {
       zoom: 15,
@@ -284,7 +287,10 @@ export default function IssueReporter() {
 
     const searchBox = new window.google.maps.places.SearchBox(input);
     map.addListener('bounds_changed', () => {
-      searchBox.setBounds(map.getBounds() as google.maps.LatLngBounds);
+      const bounds = map.getBounds();
+      if (bounds) {
+        searchBox.setBounds(bounds);
+      }
     });
 
     searchBox.addListener('places_changed', () => {
@@ -435,7 +441,7 @@ export default function IssueReporter() {
       setError('Please describe the issue');
       return;
     }
-    if (!location.lat) {
+    if (!location.lat || !location.lng) {
       setError('Please select or detect a location');
       return;
     }
@@ -511,7 +517,7 @@ export default function IssueReporter() {
     }
   };
 
-  const canSubmit = photoFile && description.trim() && location.lat && selectedOffices.length > 0 && userInfo;
+  const canSubmit = photoFile && description.trim() && location.lat && location.lng && selectedOffices.length > 0 && userInfo;
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4">
@@ -744,7 +750,7 @@ export default function IssueReporter() {
                   </div>
                 )}
 
-                {location.lat && (
+                {location.lat && location.lng && (
                   <div className="p-3 md:p-4 bg-gray-50 border border-gray-200 rounded-lg mb-6">
                     <div className="flex items-start gap-2 md:gap-3">
                       <MapPin className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
