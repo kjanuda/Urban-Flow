@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent, KeyboardEvent } from "react";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import headerImage2 from '../../../../public/clm1.jpg';
 
@@ -37,7 +37,8 @@ export default function UserRegisterPage() {
     setPasswordStrength({ score, ...strengths[score] });
   }, [form.password]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     setMsg({ text: "", type: "" });
 
@@ -83,9 +84,9 @@ export default function UserRegisterPage() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !loading) {
-      handleSubmit(e);
+      handleSubmit(e as unknown as FormEvent);
     }
   };
 
@@ -142,7 +143,7 @@ export default function UserRegisterPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               value={form.name}
@@ -200,7 +201,7 @@ export default function UserRegisterPage() {
             )}
 
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-900 focus:ring-4 focus:ring-gray-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base mt-6"
             >
@@ -219,7 +220,7 @@ export default function UserRegisterPage() {
                 </>
               )}
             </button>
-          </div>
+          </form>
 
           <p className="text-center text-sm text-gray-600 mt-6">
             Already have an account?{" "}
