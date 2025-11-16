@@ -266,6 +266,37 @@ export default function AnalyticsDashboard() {
     return null;
   };
 
+  // Custom label renderer for pie charts
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    index
+  }: any) => {
+    if (!statusData[index]) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        className="text-sm font-semibold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -450,7 +481,7 @@ export default function AnalyticsDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
+                      label={renderCustomizedLabel}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -460,6 +491,7 @@ export default function AnalyticsDashboard() {
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -504,15 +536,15 @@ export default function AnalyticsDashboard() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">City Distribution (Pie Chart)</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">City Distribution</h2>
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
                     data={cityData.slice(0, 8) as ChartData[]}
                     cx="50%"
                     cy="50%"
-                    labelLine={true}
-                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
@@ -522,6 +554,7 @@ export default function AnalyticsDashboard() {
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -552,15 +585,15 @@ export default function AnalyticsDashboard() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">District Distribution (Pie Chart)</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">District Distribution</h2>
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
                     data={districtData.slice(0, 8) as ChartData[]}
                     cx="50%"
                     cy="50%"
-                    labelLine={true}
-                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
@@ -570,6 +603,7 @@ export default function AnalyticsDashboard() {
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -600,15 +634,15 @@ export default function AnalyticsDashboard() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Province Distribution (Pie Chart)</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Province Distribution</h2>
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
                     data={provinceData as ChartData[]}
                     cx="50%"
                     cy="50%"
-                    labelLine={true}
-                    label={({ name, percentage }: { name: string; percentage: number }) => `${name}: ${percentage.toFixed(1)}%`}
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="reports"
@@ -618,6 +652,7 @@ export default function AnalyticsDashboard() {
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
