@@ -1,17 +1,38 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Lock, Mail, Loader2, LogIn, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function AdminLoginPage() {
+function ResetPasswordForm() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      setMsg("❌ Invalid reset link");
+    }
+  }, [token]);
 
   const handleSubmit = async () => {
-    if (!form.email || !form.password) {
-      setMsg("❌ Please fill in all fields");
+    if (!newPassword || !confirmPassword) {
+      setMsg("❌ Please fill all fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMsg("❌ Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMsg("❌ Password must be at least 6 characters");
       return;
     }
 
@@ -19,22 +40,19 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://cityreg.onrender.com/api/auth/admin/login", {
+      const res = await fetch("https://cityreg.onrender.com/api/auth/admin/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ token, newPassword }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("admin", JSON.stringify(data.admin));
-        setMsg("✅ Login successful!");
-        setTimeout(() => {
-          router.push("/admin/profile");
-        }, 500);
+        setSuccess(true);
+        setMsg("✅ Password reset successful!");
+        setTimeout(() => router.push("/admin/login"), 2000);
       } else {
-        setMsg(`❌ ${data.message || "Login failed"}`);
+        setMsg(`❌ ${data.message || "Failed to reset password"}`);
       }
     } catch (err) {
       setMsg("❌ Server error. Please try again.");
@@ -49,6 +67,22 @@ export default function AdminLoginPage() {
     }
   };
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+        <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+            <CheckCircle className="w-12 h-12 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Password Reset!</h2>
+          <p className="text-gray-600 mb-6">
+            Your password has been successfully reset. Redirecting to login...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8">
@@ -56,22 +90,22 @@ export default function AdminLoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full mb-4 shadow-lg">
             <Lock className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Admin Login</h2>
-          <p className="text-gray-600 mt-2">Access your admin dashboard</p>
+          <h2 className="text-3xl font-bold text-gray-900">Reset Password</h2>
+          <p className="text-gray-600 mt-2">Enter your new password</p>
         </div>
 
         <div className="space-y-5">
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <Mail className="w-4 h-4" />
-              Email Address
+              <Lock className="w-4 h-4" />
+              New Password
             </label>
             <input
               className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none text-gray-900"
-              placeholder="admin@example.com"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="Enter new password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               onKeyPress={handleKeyPress}
             />
           </div>
@@ -79,41 +113,32 @@ export default function AdminLoginPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Lock className="w-4 h-4" />
-              Password
+              Confirm Password
             </label>
             <input
               className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none text-gray-900"
-              placeholder="••••••••"
+              placeholder="Confirm new password"
               type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               onKeyPress={handleKeyPress}
             />
           </div>
 
-          <div className="flex justify-end">
-            <button
-              onClick={() => router.push("/admin/forgot-password")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
-            >
-              Forgot password?
-            </button>
-          </div>
-
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !token}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Logging in...
+                Resetting...
               </>
             ) : (
               <>
-                <LogIn className="w-5 h-5" />
-                Login
+                <Lock className="w-5 h-5" />
+                Reset Password
               </>
             )}
           </button>
@@ -135,19 +160,19 @@ export default function AdminLoginPage() {
             <span>{msg}</span>
           </div>
         )}
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{" "}
-            <button
-              onClick={() => router.push("/admin/register")}
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-            >
-              Sign up for free
-            </button>
-          </p>
-        </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

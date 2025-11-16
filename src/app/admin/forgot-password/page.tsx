@@ -1,17 +1,18 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Loader2, LogIn, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, Loader2, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function AdminLoginPage() {
+export default function AdminForgotPasswordPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async () => {
-    if (!form.email || !form.password) {
-      setMsg("❌ Please fill in all fields");
+    if (!email) {
+      setMsg("❌ Please enter your email address");
       return;
     }
 
@@ -19,22 +20,18 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://cityreg.onrender.com/api/auth/admin/login", {
+      const res = await fetch("https://cityreg.onrender.com/api/auth/admin/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ email }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("admin", JSON.stringify(data.admin));
-        setMsg("✅ Login successful!");
-        setTimeout(() => {
-          router.push("/admin/profile");
-        }, 500);
+        setEmailSent(true);
+        setMsg("✅ Password reset link sent! Check your email.");
       } else {
-        setMsg(`❌ ${data.message || "Login failed"}`);
+        setMsg(`❌ ${data.message || "Failed to send reset link"}`);
       }
     } catch (err) {
       setMsg("❌ Server error. Please try again.");
@@ -49,15 +46,49 @@ export default function AdminLoginPage() {
     }
   };
 
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+        <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+            <CheckCircle className="w-12 h-12 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Check Your Email!</h2>
+          <p className="text-gray-600 mb-2">
+            We've sent a password reset link to:
+          </p>
+          <p className="text-blue-600 font-semibold mb-6">{email}</p>
+          <p className="text-sm text-gray-500 mb-8">
+            Click the link in the email to reset your password. The link will expire in 1 hour.
+          </p>
+          <button
+            onClick={() => router.push("/admin/login")}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold shadow-md"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8">
+        <button
+          onClick={() => router.push("/admin/login")}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back to Login</span>
+        </button>
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full mb-4 shadow-lg">
-            <Lock className="w-8 h-8 text-white" />
+            <Mail className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Admin Login</h2>
-          <p className="text-gray-600 mt-2">Access your admin dashboard</p>
+          <h2 className="text-3xl font-bold text-gray-900">Forgot Password?</h2>
+          <p className="text-gray-600 mt-2">No worries, we'll send you reset instructions</p>
         </div>
 
         <div className="space-y-5">
@@ -70,34 +101,10 @@ export default function AdminLoginPage() {
               className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none text-gray-900"
               placeholder="admin@example.com"
               type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               onKeyPress={handleKeyPress}
             />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <Lock className="w-4 h-4" />
-              Password
-            </label>
-            <input
-              className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none text-gray-900"
-              placeholder="••••••••"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              onKeyPress={handleKeyPress}
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              onClick={() => router.push("/admin/forgot-password")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
-            >
-              Forgot password?
-            </button>
           </div>
 
           <button
@@ -108,12 +115,12 @@ export default function AdminLoginPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Logging in...
+                Sending...
               </>
             ) : (
               <>
-                <LogIn className="w-5 h-5" />
-                Login
+                <Mail className="w-5 h-5" />
+                Send Reset Link
               </>
             )}
           </button>
@@ -135,18 +142,6 @@ export default function AdminLoginPage() {
             <span>{msg}</span>
           </div>
         )}
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{" "}
-            <button
-              onClick={() => router.push("/admin/register")}
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-            >
-              Sign up for free
-            </button>
-          </p>
-        </div>
       </div>
     </div>
   );

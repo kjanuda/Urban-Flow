@@ -23,7 +23,7 @@ export default function VerifyEmailPage() {
   const verifyEmail = async (token: string) => {
     try {
       // Call your BACKEND API
-      const res = await fetch(`http://localhost:5000/api/auth/verify-email?token=${token}`);
+      const res = await fetch(`https://cityreg.onrender.com/api/auth/verify-email?token=${token}`);
       const data = await res.json();
 
       if (res.ok) {

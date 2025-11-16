@@ -1,254 +1,233 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Calendar, 
-  LogOut, 
-  Settings, 
-  Camera,
-  Edit2,
-  Save,
-  X,
-  Loader2,
-  MapPin,
-  Briefcase
-} from "lucide-react";
 
-export default function AdminProfilePage() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<any>(null);
+import { useState, useEffect } from 'react';
+import { MapPin, MessageSquare, Upload, CheckCircle, AlertCircle, Loader2, Send, Camera, User, Briefcase } from 'lucide-react';
+
+const statusConfig = {
+  'resolving': { label: 'Resolving', color: 'bg-blue-50', textColor: 'text-blue-700', badgeColor: 'bg-blue-200 text-blue-900', borderColor: 'border-blue-300' },
+  'processing': { label: 'Processing', color: 'bg-yellow-50', textColor: 'text-yellow-700', badgeColor: 'bg-yellow-200 text-yellow-900', borderColor: 'border-yellow-300' },
+  'arranging': { label: 'Arranging', color: 'bg-purple-50', textColor: 'text-purple-700', badgeColor: 'bg-purple-200 text-purple-900', borderColor: 'border-purple-300' },
+  'resolved': { label: 'Resolved', color: 'bg-green-50', textColor: 'text-green-700', badgeColor: 'bg-green-200 text-green-900', borderColor: 'border-green-300' },
+  'pending': { label: 'Pending', color: 'bg-gray-50', textColor: 'text-gray-700', badgeColor: 'bg-gray-300 text-gray-900', borderColor: 'border-gray-400' }
+};
+
+export default function AdminIssueManagement() {
+  const [adminProfile, setAdminProfile] = useState(null);
+  const [issues, setIssues] = useState([]);
+  const [selectedIssue, setSelectedIssue] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", email: "", city: "", position: "" });
-  const [saving, setSaving] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [error, setError] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
+    loadAdminProfile();
   }, []);
 
-  const fetchProfile = async () => {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
-
+  const loadAdminProfile = async () => {
     try {
-      setLoading(true);
-      setError("");
-
-      // Try multiple possible endpoints
-      let res;
-      let data;
-      
-      // Option 1: Try /api/admin/profile
-      res = await fetch("http://localhost:5000/api/admin/profile", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      // If 404, try alternative endpoint
-      if (res.status === 404) {
-        res = await fetch("http://localhost:5000/api/auth/admin/me", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-      }
-
-      // If still 404, try another alternative
-      if (res.status === 404) {
-        res = await fetch("http://localhost:5000/api/admin/me", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-      }
-
-      if (res.status === 401 || res.status === 403) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("admin");
-        router.push("/admin/login");
-        return;
-      }
-
-      if (res.ok) {
-        data = await res.json();
-        const adminData = data.admin || data;
-        setProfile(adminData);
-        setEditForm({ 
-          name: adminData.name, 
-          email: adminData.email,
-          city: adminData.city || "",
-          position: adminData.position || ""
-        });
-      } else {
-        // Fallback: use stored admin data or decode token
-        const storedAdmin = localStorage.getItem("admin");
-        if (storedAdmin) {
-          const adminData = JSON.parse(storedAdmin);
-          setProfile(adminData);
-          setEditForm({ 
-            name: adminData.name, 
-            email: adminData.email,
-            city: adminData.city || "",
-            position: adminData.position || ""
-          });
+      const storedAdmin = localStorage.getItem('admin');
+      if (storedAdmin) {
+        const adminData = JSON.parse(storedAdmin);
+        setAdminProfile(adminData);
+        
+        // Check if admin has an ID, if not we need to register them
+        if (adminData._id) {
+          loadIssuesForLocation(adminData.city);
         } else {
-          // Decode JWT token
-          try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            
-            const decoded = JSON.parse(jsonPayload);
-            const adminData = {
-              name: decoded.name || "Admin User",
-              email: decoded.email || "N/A",
-              city: decoded.city || "N/A",
-              position: decoded.position || "Administrator",
-            };
-            setProfile(adminData);
-            setEditForm({ 
-              name: adminData.name, 
-              email: adminData.email,
-              city: adminData.city,
-              position: adminData.position
-            });
-          } catch (decodeErr) {
-            setError("Unable to load profile");
-          }
+          // Register admin first
+          await registerAdmin(adminData);
         }
       }
     } catch (err) {
-      console.error("Profile fetch error:", err);
-      setError("Failed to load profile. Please try again.");
-      
-      // Fallback: use stored admin data
-      const storedAdmin = localStorage.getItem("admin");
-      if (storedAdmin) {
-        const adminData = JSON.parse(storedAdmin);
-        setProfile(adminData);
-        setEditForm({ 
-          name: adminData.name, 
-          email: adminData.email,
-          city: adminData.city || "",
-          position: adminData.position || ""
-        });
-      }
+      console.error('Error loading admin profile:', err);
+      setError('Failed to load admin profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditForm({ 
-      name: profile.name, 
-      email: profile.email,
-      city: profile.city || "",
-      position: profile.position || ""
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditForm({ 
-      name: profile.name, 
-      email: profile.email,
-      city: profile.city || "",
-      position: profile.position || ""
-    });
-  };
-
-  const handleSaveProfile = async () => {
-    const token = localStorage.getItem("token");
-    setSaving(true);
-
+  const registerAdmin = async (adminData) => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/profile", {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(editForm)
+      const response = await fetch('https://cityreg.onrender.com/admin/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(adminData)
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to update profile");
+      const result = await response.json();
+      if (result.success) {
+        const updatedAdmin = result.admin;
+        setAdminProfile(updatedAdmin);
+        localStorage.setItem('admin', JSON.stringify(updatedAdmin));
+        loadIssuesForLocation(adminData.city);
       }
-
-      const data = await res.json();
-      const updatedAdmin = data.admin || data;
-      setProfile(updatedAdmin);
-      localStorage.setItem("admin", JSON.stringify(updatedAdmin));
-      setIsEditing(false);
-      setError("");
     } catch (err) {
-      console.error("Update error:", err);
-      setError("Failed to update profile. Please try again.");
-    } finally {
-      setSaving(false);
+      console.error('Error registering admin:', err);
+      setError('Failed to register admin');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("admin");
-    router.push("/admin/login");
+  const loadIssuesForLocation = async (city) => {
+    try {
+      const response = await fetch(`http://localhost:5001/reports/by-city/${city}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setIssues(data.reports);
+        setError('');
+      }
+    } catch (err) {
+      console.error('Error loading issues:', err);
+      setError(`Unable to load issues: ${err.message}. Make sure the backend is running on port 5001.`);
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
-      year: "numeric", 
-      month: "long", 
-      day: "numeric" 
-    });
+  const handleStatusChange = async (newStatus) => {
+    if (!selectedIssue || !adminProfile) return;
+    setUpdating(true);
+    
+    try {
+      const response = await fetch(`http://localhost:5001/reports/${selectedIssue._id}/resolution-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: newStatus,
+          adminId: adminProfile._id 
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedIssue(data.report);
+        setIssues(issues.map(i => i._id === selectedIssue._id ? data.report : i));
+      } else {
+        setError('Failed to update status');
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      setError('Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
   };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !selectedIssue || !adminProfile) return;
+    
+    // Validate comment length
+    if (newComment.trim().length < 3) {
+      setError('Comment must be at least 3 characters long');
+      return;
+    }
+    
+    if (newComment.trim().length > 1000) {
+      setError('Comment is too long. Maximum 1000 characters.');
+      return;
+    }
+    
+    setUpdating(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`http://localhost:5001/reports/${selectedIssue._id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          comment: newComment.trim(),
+          adminId: adminProfile._id 
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedIssue(data.report);
+        setIssues(issues.map(i => i._id === selectedIssue._id ? data.report : i));
+        setNewComment('');
+      } else {
+        setError('Failed to add comment');
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setError('Failed to add comment');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !selectedIssue || !adminProfile) return;
+
+    // Validate file types
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const invalidFiles = files.filter(f => !validTypes.includes(f.type));
+    
+    if (invalidFiles.length > 0) {
+      setError('Please upload only image files (JPEG, PNG, GIF, WebP)');
+      return;
+    }
+
+    // Validate file sizes (max 5MB per file)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversizedFiles = files.filter(f => f.size > maxSize);
+    
+    if (oversizedFiles.length > 0) {
+      setError('Some files are too large. Maximum size is 5MB per image.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError('');
+    
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('adminId', adminProfile._id);
+
+        const response = await fetch(`http://localhost:5001/reports/${selectedIssue._id}/evidence-photo`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSelectedIssue(data.report);
+          setIssues(issues.map(i => i._id === selectedIssue._id ? data.report : i));
+        } else {
+          setError('Failed to upload photo');
+        }
+      } catch (err) {
+        console.error('Error uploading photo:', err);
+        setError('Failed to upload photo');
+      }
+    }
+    
+    setUploadingPhoto(false);
+    // Reset file input
+    e.target.value = '';
+  };
+
+  const filteredIssues = filterStatus === 'all' 
+    ? issues 
+    : issues.filter(i => i.resolutionStatus === filterStatus);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading your profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <X className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-6">Unable to load your profile data.</p>
-          <button
-            onClick={() => router.push("/admin/login")}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Back to Login
-          </button>
+          <p className="text-gray-600 font-medium">Loading issues...</p>
         </div>
       </div>
     );
@@ -256,198 +235,333 @@ export default function AdminProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <div className="max-w-4xl mx-auto pt-8 pb-12">
+      <div className="max-w-7xl mx-auto pt-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Profile</h1>
-            <p className="text-gray-600 mt-1">Manage your account information</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Logout</span>
-          </button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Issue Management Dashboard</h1>
+          {adminProfile && (
+            <div className="text-gray-600 mt-3 space-y-1">
+              <p className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                {adminProfile.name}
+              </p>
+              <p className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                {adminProfile.position || 'Administrator'}
+              </p>
+              <p className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                {adminProfile.city} • {adminProfile.district} • {adminProfile.province}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Error Message */}
+        {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6 flex items-start gap-3">
-            <X className="w-5 h-5 mt-0.5 flex-shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-red-900">Error</p>
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
           </div>
         )}
 
-        {/* Main Profile Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-          {/* Cover Image */}
-          <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
-
-          {/* Profile Header */}
-          <div className="px-8 pb-8">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 mb-6">
-              <div className="relative">
-                <div className="w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                    <User className="w-16 h-16 text-white" />
-                  </div>
-                </div>
-                <button className="absolute bottom-2 right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition">
-                  <Camera className="w-4 h-4 text-white" />
-                </button>
-              </div>
-
-              <div className="mt-4 sm:mt-0">
-                {!isEditing ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Issues List */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              {/* Filter Tabs */}
+              <div className="flex border-b border-gray-200 flex-wrap">
+                {['all', 'pending', 'resolving', 'processing', 'arranging', 'resolved'].map(status => (
                   <button
-                    onClick={handleEdit}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium transition min-w-fit ${
+                      filterStatus === status
+                        ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   >
-                    <Edit2 className="w-4 h-4" />
-                    Edit Profile
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md disabled:opacity-60"
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4" />
-                      )}
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      <X className="w-4 h-4" />
-                      Cancel
-                    </button>
+                ))}
+              </div>
+
+              {/* Issues */}
+              <div className="divide-y max-h-[calc(100vh-300px)] overflow-y-auto">
+                {filteredIssues.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No issues found</p>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Profile Info */}
-            <div className="space-y-6">
-              {/* Name */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <User className="w-4 h-4" />
-                  Full Name
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
-                    placeholder="Enter your name"
-                  />
                 ) : (
-                  <p className="text-lg font-semibold text-gray-900">{profile.name}</p>
+                  filteredIssues.map(issue => (
+                    <button
+                      key={issue._id}
+                      onClick={() => setSelectedIssue(issue)}
+                      className={`w-full p-4 text-left transition border-l-4 ${
+                        selectedIssue?._id === issue._id
+                          ? 'bg-blue-50 border-blue-600'
+                          : 'bg-white border-transparent hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate text-sm">{issue.reporter.name}</p>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">{issue.description}</p>
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            <span className={`px-3 py-1.5 rounded-md text-xs font-bold border-2 ${statusConfig[issue.resolutionStatus]?.badgeColor || 'bg-gray-300 text-gray-900'} ${statusConfig[issue.resolutionStatus]?.borderColor || 'border-gray-400'}`}>
+                              {statusConfig[issue.resolutionStatus]?.label || 'Pending'}
+                            </span>
+                            {issue.assignedAdminName && (
+                              <span className="px-3 py-1.5 rounded-md text-xs font-bold bg-purple-200 text-purple-900 border-2 border-purple-300">
+                                {issue.assignedAdminName === adminProfile?.name ? '👤 You' : issue.assignedAdminName}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))
                 )}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Mail className="w-4 h-4" />
-                  Email Address
-                </label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
-                    placeholder="Enter your email"
-                  />
-                ) : (
-                  <p className="text-lg text-gray-900">{profile.email}</p>
-                )}
-              </div>
-
-              {/* City */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  City
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editForm.city}
-                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
-                    placeholder="Enter your city"
-                  />
-                ) : (
-                  <p className="text-lg text-gray-900">{profile.city || "N/A"}</p>
-                )}
-              </div>
-
-              {/* Position */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Briefcase className="w-4 h-4" />
-                  Position
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editForm.position}
-                    onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
-                    placeholder="Enter your position"
-                  />
-                ) : (
-                  <p className="text-lg text-gray-900">{profile.position || "N/A"}</p>
-                )}
-              </div>
-
-              {/* Role */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Shield className="w-4 h-4" />
-                  Account Role
-                </label>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  {profile.role || "Admin"}
-                </span>
-              </div>
-
-              {/* Member Since */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4" />
-                  Member Since
-                </label>
-                <p className="text-lg text-gray-900">{formatDate(profile.createdAt)}</p>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Additional Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition text-left group">
-            <Settings className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition" />
-            <h3 className="font-semibold text-gray-900 mb-1">Account Settings</h3>
-            <p className="text-sm text-gray-600">Manage your account preferences</p>
-          </button>
+          {/* Issue Details Panel */}
+          {selectedIssue ? (
+            <div className="lg:col-span-2 space-y-6">
+              {/* Main Issue Card */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedIssue.reporter.name}</h2>
+                    <p className="text-gray-600 text-sm mt-1">{selectedIssue.reporter.email}</p>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {new Date(selectedIssue.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
 
-          <button className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition text-left group">
-            <Shield className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition" />
-            <h3 className="font-semibold text-gray-900 mb-1">Security</h3>
-            <p className="text-sm text-gray-600">Update password and security settings</p>
-          </button>
+                {/* Assignment Info */}
+                {selectedIssue.assignedAdmin && (
+                  <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-sm">
+                      <span className="font-semibold text-purple-900">Assigned to:</span>
+                      <span className="text-purple-700 ml-2">{selectedIssue.assignedAdminName} ({selectedIssue.assignedAdminPosition})</span>
+                    </p>
+                    <p className="text-xs text-purple-600 mt-1">
+                      Assigned: {new Date(selectedIssue.assignedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+
+                {/* Location Info */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-4 border border-blue-100">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{selectedIssue.location.address}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedIssue.location.city} • {selectedIssue.location.district} • {selectedIssue.location.province}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {selectedIssue.location.latitude.toFixed(4)}, {selectedIssue.location.longitude.toFixed(4)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Issue Description</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedIssue.description}</p>
+                </div>
+
+                {/* Status Selection */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">Resolution Status</h3>
+                  <div className="space-y-2">
+                    {['resolving', 'processing', 'arranging', 'resolved'].map(status => (
+                      <button
+                        key={status}
+                        onClick={() => handleStatusChange(status)}
+                        disabled={updating}
+                        className={`w-full px-4 py-3 text-left rounded-lg font-medium transition flex items-center gap-3 ${
+                          selectedIssue.resolutionStatus === status
+                            ? `${statusConfig[status].color} ${statusConfig[status].textColor} border-2 border-current`
+                            : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-300'
+                        } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {selectedIssue.resolutionStatus === status && <CheckCircle className="w-5 h-5" />}
+                        {statusConfig[status].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Photos Section */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Camera className="w-5 h-5" />
+                  Photos & Evidence
+                </h3>
+                
+                {/* Initial Report Photo */}
+                <div className="mb-4">
+                  <p className="text-xs text-gray-700 mb-2 font-bold uppercase tracking-wide">Initial Report</p>
+                  <div className="relative rounded-lg overflow-hidden bg-gray-200 aspect-video border-2 border-gray-300">
+                    <img 
+                      src={selectedIssue.photoUrl} 
+                      alt="Initial Report" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gray-300 hidden flex-col items-center justify-center text-gray-600">
+                      <Camera className="w-12 h-12 mb-2 opacity-50" />
+                      <p className="text-xs font-medium">Image not available</p>
+                      <p className="text-xs text-gray-500 mt-1">Photo may not be uploaded yet</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Evidence Photos */}
+                {selectedIssue.evidencePhotos && selectedIssue.evidencePhotos.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-700 mb-2 font-bold uppercase tracking-wide">Evidence Photos ({selectedIssue.evidencePhotos.length})</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedIssue.evidencePhotos.map((photo, idx) => (
+                        <div key={idx} className="relative rounded-lg overflow-hidden bg-gray-200 aspect-video group border-2 border-gray-300">
+                          <img 
+                            src={photo.url} 
+                            alt={`Evidence ${idx + 1}`} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gray-300 hidden flex-col items-center justify-center text-gray-600">
+                            <Camera className="w-12 h-12 mb-2 opacity-50" />
+                            <p className="text-xs font-medium">Image not available</p>
+                          </div>
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition flex items-end pointer-events-none">
+                            <div className="w-full p-3 bg-gradient-to-t from-black via-black/80 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                              <p className="font-bold">{photo.uploadedBy || 'Unknown'}</p>
+                              <p className="font-medium">{photo.uploadedAt ? new Date(photo.uploadedAt).toLocaleDateString() : 'Date unknown'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload New Photo */}
+                <label className="block">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    disabled={uploadingPhoto}
+                    className="hidden"
+                  />
+                  <div className="border-2 border-dashed border-blue-400 rounded-lg p-6 text-center cursor-pointer hover:bg-blue-50 transition bg-white">
+                    {uploadingPhoto ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-blue-600 mx-auto mb-2 animate-spin" />
+                        <p className="text-sm text-blue-700 font-bold">Uploading...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                        <p className="text-sm text-blue-700 font-bold">Upload Evidence Photos</p>
+                        <p className="text-xs text-gray-600 mt-1">Click to select one or more images</p>
+                      </>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Comments Section */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Comments & Updates ({selectedIssue.adminActions?.length || 0})
+                </h3>
+
+                {/* Comments List */}
+                <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
+                  {!selectedIssue.adminActions || selectedIssue.adminActions.length === 0 ? (
+                    <p className="text-gray-600 text-sm text-center py-4">No comments or updates yet</p>
+                  ) : (
+                    selectedIssue.adminActions
+                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                      .map((action, idx) => (
+                        <div key={idx} className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1">
+                            <div>
+                              <p className="font-semibold text-gray-900 text-sm">{action.adminName}</p>
+                              <p className="text-xs text-gray-600 font-medium">{action.adminPosition}</p>
+                            </div>
+                            <span className="text-xs text-gray-600 font-medium">
+                              {new Date(action.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          {action.actionType === 'comment' && (
+                            <p className="text-gray-900 text-sm font-medium leading-relaxed mt-2">{action.comment}</p>
+                          )}
+                          
+                          {action.actionType === 'status_update' && (
+                            <p className="text-gray-900 text-sm font-medium mt-2">
+                              Status changed: <span className="font-bold text-blue-700">{action.statusChange.from}</span> → <span className="font-bold text-green-700">{action.statusChange.to}</span>
+                            </p>
+                          )}
+                          
+                          {action.actionType === 'photo_upload' && (
+                            <p className="text-gray-900 text-sm font-medium mt-2">📸 Uploaded evidence photo</p>
+                          )}
+                        </div>
+                      ))
+                  )}
+                </div>
+
+                {/* Comment Input */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Add a comment or update..."
+                    rows="3"
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 font-medium placeholder:text-gray-500"
+                  />
+                  <button
+                    onClick={handleAddComment}
+                    disabled={!newComment.trim() || updating}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold text-sm sm:self-end"
+                  >
+                    {updating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                    <span className="hidden sm:inline">Send</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-12 flex items-center justify-center">
+              <div className="text-center">
+                <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Select an issue to view details</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
