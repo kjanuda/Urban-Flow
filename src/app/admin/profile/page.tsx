@@ -3,7 +3,79 @@
 import { useState, useEffect } from 'react';
 import { MapPin, MessageSquare, Upload, CheckCircle, AlertCircle, Loader2, Send, Camera, User, Briefcase } from 'lucide-react';
 
-const statusConfig = {
+// Type definitions
+interface AdminProfile {
+  _id?: string;
+  name: string;
+  email: string;
+  position?: string;
+  city: string;
+  district: string;
+  province: string;
+}
+
+interface Location {
+  address: string;
+  city: string;
+  district: string;
+  province: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface Reporter {
+  name: string;
+  email: string;
+}
+
+interface StatusChange {
+  from: string;
+  to: string;
+}
+
+interface AdminAction {
+  actionType: 'comment' | 'status_update' | 'photo_upload';
+  adminId: string;
+  adminName: string;
+  adminPosition: string;
+  timestamp: string;
+  comment?: string;
+  statusChange?: StatusChange;
+}
+
+interface EvidencePhoto {
+  url: string;
+  uploadedBy?: string;
+  uploadedAt?: string;
+}
+
+interface Issue {
+  _id: string;
+  reporter: Reporter;
+  description: string;
+  location: Location;
+  photoUrl: string;
+  resolutionStatus: 'pending' | 'resolving' | 'processing' | 'arranging' | 'resolved';
+  assignedAdmin?: string;
+  assignedAdminName?: string;
+  assignedAdminPosition?: string;
+  assignedAt?: string;
+  createdAt: string;
+  adminActions?: AdminAction[];
+  evidencePhotos?: EvidencePhoto[];
+}
+
+interface StatusConfig {
+  [key: string]: {
+    label: string;
+    color: string;
+    textColor: string;
+    badgeColor: string;
+    borderColor: string;
+  };
+}
+
+const statusConfig: StatusConfig = {
   'resolving': { label: 'Resolving', color: 'bg-blue-50', textColor: 'text-blue-700', badgeColor: 'bg-blue-200 text-blue-900', borderColor: 'border-blue-300' },
   'processing': { label: 'Processing', color: 'bg-yellow-50', textColor: 'text-yellow-700', badgeColor: 'bg-yellow-200 text-yellow-900', borderColor: 'border-yellow-300' },
   'arranging': { label: 'Arranging', color: 'bg-purple-50', textColor: 'text-purple-700', badgeColor: 'bg-purple-200 text-purple-900', borderColor: 'border-purple-300' },
@@ -12,25 +84,25 @@ const statusConfig = {
 };
 
 export default function AdminIssueManagement() {
-  const [adminProfile, setAdminProfile] = useState(null);
-  const [issues, setIssues] = useState([]);
-  const [selectedIssue, setSelectedIssue] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [error, setError] = useState('');
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [updating, setUpdating] = useState<boolean>(false);
+  const [newComment, setNewComment] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [error, setError] = useState<string>('');
+  const [uploadingPhoto, setUploadingPhoto] = useState<boolean>(false);
 
   useEffect(() => {
     loadAdminProfile();
   }, []);
 
-  const loadAdminProfile = async () => {
+  const loadAdminProfile = async (): Promise<void> => {
     try {
       const storedAdmin = localStorage.getItem('admin');
       if (storedAdmin) {
-        const adminData = JSON.parse(storedAdmin);
+        const adminData: AdminProfile = JSON.parse(storedAdmin);
         setAdminProfile(adminData);
         
         // Check if admin has an ID, if not we need to register them
@@ -49,7 +121,7 @@ export default function AdminIssueManagement() {
     }
   };
 
-  const registerAdmin = async (adminData) => {
+  const registerAdmin = async (adminData: AdminProfile): Promise<void> => {
     try {
       const response = await fetch('https://cityreg.onrender.com/admin/register', {
         method: 'POST',
@@ -59,7 +131,7 @@ export default function AdminIssueManagement() {
 
       const result = await response.json();
       if (result.success) {
-        const updatedAdmin = result.admin;
+        const updatedAdmin: AdminProfile = result.admin;
         setAdminProfile(updatedAdmin);
         localStorage.setItem('admin', JSON.stringify(updatedAdmin));
         loadIssuesForLocation(adminData.city);
@@ -70,7 +142,7 @@ export default function AdminIssueManagement() {
     }
   };
 
-  const loadIssuesForLocation = async (city) => {
+  const loadIssuesForLocation = async (city: string): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:5001/reports/by-city/${city}`, {
         method: 'GET',
@@ -88,11 +160,11 @@ export default function AdminIssueManagement() {
       }
     } catch (err) {
       console.error('Error loading issues:', err);
-      setError(`Unable to load issues: ${err.message}. Make sure the backend is running on port 5001.`);
+      setError(`Unable to load issues: ${err instanceof Error ? err.message : 'Unknown error'}. Make sure the backend is running on port 5001.`);
     }
   };
 
-  const handleStatusChange = async (newStatus) => {
+  const handleStatusChange = async (newStatus: string): Promise<void> => {
     if (!selectedIssue || !adminProfile) return;
     setUpdating(true);
     
@@ -121,7 +193,7 @@ export default function AdminIssueManagement() {
     }
   };
 
-  const handleAddComment = async () => {
+  const handleAddComment = async (): Promise<void> => {
     if (!newComment.trim() || !selectedIssue || !adminProfile) return;
     
     // Validate comment length
@@ -164,7 +236,7 @@ export default function AdminIssueManagement() {
     }
   };
 
-  const handlePhotoUpload = async (e) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0 || !selectedIssue || !adminProfile) return;
 
@@ -193,7 +265,7 @@ export default function AdminIssueManagement() {
       try {
         const formData = new FormData();
         formData.append('photo', file);
-        formData.append('adminId', adminProfile._id);
+        formData.append('adminId', adminProfile._id || '');
 
         const response = await fetch(`http://localhost:5001/reports/${selectedIssue._id}/evidence-photo`, {
           method: 'POST',
@@ -353,7 +425,7 @@ export default function AdminIssueManagement() {
                       <span className="text-purple-700 ml-2">{selectedIssue.assignedAdminName} ({selectedIssue.assignedAdminPosition})</span>
                     </p>
                     <p className="text-xs text-purple-600 mt-1">
-                      Assigned: {new Date(selectedIssue.assignedAt).toLocaleDateString()}
+                      Assigned: {new Date(selectedIssue.assignedAt || '').toLocaleDateString()}
                     </p>
                   </div>
                 )}
@@ -391,12 +463,12 @@ export default function AdminIssueManagement() {
                         disabled={updating}
                         className={`w-full px-4 py-3 text-left rounded-lg font-medium transition flex items-center gap-3 ${
                           selectedIssue.resolutionStatus === status
-                            ? `${statusConfig[status].color} ${statusConfig[status].textColor} border-2 border-current`
+                            ? `${statusConfig[status]?.color || 'bg-gray-50'} ${statusConfig[status]?.textColor || 'text-gray-700'} border-2 border-current`
                             : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-300'
                         } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {selectedIssue.resolutionStatus === status && <CheckCircle className="w-5 h-5" />}
-                        {statusConfig[status].label}
+                        {statusConfig[status]?.label || status}
                       </button>
                     ))}
                   </div>
@@ -419,8 +491,9 @@ export default function AdminIssueManagement() {
                       alt="Initial Report" 
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
                       }}
                     />
                     <div className="absolute inset-0 bg-gray-300 hidden flex-col items-center justify-center text-gray-600">
@@ -443,8 +516,9 @@ export default function AdminIssueManagement() {
                             alt={`Evidence ${idx + 1}`} 
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
                             }}
                           />
                           <div className="absolute inset-0 bg-gray-300 hidden flex-col items-center justify-center text-gray-600">
@@ -520,7 +594,7 @@ export default function AdminIssueManagement() {
                             <p className="text-gray-900 text-sm font-medium leading-relaxed mt-2">{action.comment}</p>
                           )}
                           
-                          {action.actionType === 'status_update' && (
+                          {action.actionType === 'status_update' && action.statusChange && (
                             <p className="text-gray-900 text-sm font-medium mt-2">
                               Status changed: <span className="font-bold text-blue-700">{action.statusChange.from}</span> → <span className="font-bold text-green-700">{action.statusChange.to}</span>
                             </p>
@@ -540,7 +614,7 @@ export default function AdminIssueManagement() {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Add a comment or update..."
-                    rows="3"
+                    rows={3}
                     className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 font-medium placeholder:text-gray-500"
                   />
                   <button
