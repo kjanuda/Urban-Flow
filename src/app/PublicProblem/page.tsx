@@ -30,14 +30,100 @@ import {
 
 const API_URL = 'https://city-process.onrender.com';
 
+interface Reporter {
+  name: string;
+  email: string;
+}
+
+interface Location {
+  address: string;
+  city: string;
+  district: string;
+  province: string;
+}
+
+interface Office {
+  _id: string;
+  name: string;
+  type: string;
+  email: string;
+}
+
+interface EmailStatus {
+  email: string;
+  status: string;
+}
+
+interface PublicComment {
+  name: string;
+  email: string;
+  text: string;
+  timestamp: string;
+  _id: string;
+}
+
+interface AdminAction {
+  actionType: string;
+  adminName: string;
+  adminPosition?: string;
+  timestamp: string;
+  comment?: string;
+  statusChange?: {
+    from: string;
+    to: string;
+  };
+}
+
+interface EvidencePhoto {
+  url: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+interface Report {
+  _id: string;
+  reporter: Reporter;
+  description: string;
+  location: Location;
+  photoUrl: string;
+  status: string;
+  resolutionStatus: string;
+  createdAt: string;
+  assignedAdminName?: string;
+  offices: Office[];
+  emailsSent: EmailStatus[];
+  publicComments: PublicComment[];
+  adminActions: AdminAction[];
+  evidencePhotos: EvidencePhoto[];
+}
+
+interface CityGroup {
+  city: string;
+  reports: Report[];
+  count: number;
+}
+
+interface StatItem {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+interface Stats {
+  totalReports: number;
+  activeIssues: number;
+  resolvedIssues: number;
+  citiesAffected: number;
+}
+
 export default function ComprehensiveReportsDashboard() {
-  const [reports, setReports] = useState([]);
-  const [cityGroups, setCityGroups] = useState([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState(null);
-  const [expandedReportId, setExpandedReportId] = useState(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [districtFilter, setDistrictFilter] = useState('all');
@@ -48,13 +134,13 @@ export default function ComprehensiveReportsDashboard() {
   const citiesPerPage = 10;
 
   // Analytics
-  const [topCities, setTopCities] = useState([]);
-  const [topDistricts, setTopDistricts] = useState([]);
-  const [topProvinces, setTopProvinces] = useState([]);
-  const [bestCities, setBestCities] = useState([]);
-  const [bestDistricts, setBestDistricts] = useState([]);
-  const [bestProvinces, setBestProvinces] = useState([]);
-  const [stats, setStats] = useState({
+  const [topCities, setTopCities] = useState<StatItem[]>([]);
+  const [topDistricts, setTopDistricts] = useState<StatItem[]>([]);
+  const [topProvinces, setTopProvinces] = useState<StatItem[]>([]);
+  const [bestCities, setBestCities] = useState<StatItem[]>([]);
+  const [bestDistricts, setBestDistricts] = useState<StatItem[]>([]);
+  const [bestProvinces, setBestProvinces] = useState<StatItem[]>([]);
+  const [stats, setStats] = useState<Stats>({
     totalReports: 0,
     activeIssues: 0,
     resolvedIssues: 0,
@@ -62,10 +148,10 @@ export default function ComprehensiveReportsDashboard() {
   });
 
   // Comment states
-  const [publicCommentText, setPublicCommentText] = useState({});
-  const [publicCommentName, setPublicCommentName] = useState({});
-  const [publicCommentEmail, setPublicCommentEmail] = useState({});
-  const [submittingComment, setSubmittingComment] = useState({});
+  const [publicCommentText, setPublicCommentText] = useState<{[key: string]: string}>({});
+  const [publicCommentName, setPublicCommentName] = useState<{[key: string]: string}>({});
+  const [publicCommentEmail, setPublicCommentEmail] = useState<{[key: string]: string}>({});
+  const [submittingComment, setSubmittingComment] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     fetchReports();
@@ -119,9 +205,9 @@ export default function ComprehensiveReportsDashboard() {
       return;
     }
 
-    const cityStats = {};
-    const districtStats = {};
-    const provinceStats = {};
+    const cityStats: {[key: string]: {total: number; resolved: number}} = {};
+    const districtStats: {[key: string]: {total: number; resolved: number}} = {};
+    const provinceStats: {[key: string]: {total: number; resolved: number}} = {};
     let activeCount = 0;
     let resolvedCount = 0;
 
@@ -245,7 +331,7 @@ export default function ComprehensiveReportsDashboard() {
       });
     }
 
-    const grouped = filteredReports.reduce((acc, report) => {
+    const grouped = filteredReports.reduce((acc: {[key: string]: Report[]}, report) => {
       const city = report.location?.city || 'Unknown';
       if (!acc[city]) acc[city] = [];
       acc[city].push(report);
@@ -265,7 +351,7 @@ export default function ComprehensiveReportsDashboard() {
     setCityGroups(groups);
   };
 
-  const submitPublicComment = async (reportId) => {
+  const submitPublicComment = async (reportId: string) => {
     const commentKey = `${reportId}-comment`;
     const nameKey = `${reportId}-name`;
     const emailKey = `${reportId}-email`;
@@ -316,7 +402,7 @@ export default function ComprehensiveReportsDashboard() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'resolved':
         return 'bg-green-900 text-green-200';
@@ -327,7 +413,7 @@ export default function ComprehensiveReportsDashboard() {
     }
   };
 
-  const getResolutionStatusColor = (status) => {
+  const getResolutionStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'resolved':
         return 'bg-green-100 text-green-800 border-green-300';
@@ -342,8 +428,8 @@ export default function ComprehensiveReportsDashboard() {
     }
   };
 
-  const getUniqueValues = (field) => {
-    const values = new Set();
+  const getUniqueValues = (field: keyof Location) => {
+    const values = new Set<string>();
     reports.forEach(report => {
       const value = report.location?.[field] || 'Unknown';
       if (value && value !== 'Unknown') values.add(value);
