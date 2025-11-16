@@ -577,7 +577,7 @@ export default function AdminIssueManagement() {
                     <p className="text-gray-600 text-sm text-center py-4">No comments or updates yet</p>
                   ) : (
                     selectedIssue.adminActions
-                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                       .map((action, idx) => (
                         <div key={idx} className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1">
