@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
@@ -7,8 +8,10 @@ export default function AdminVerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  
-  const [status, setStatus] = useState<"loading" | "success" | "error" | "already-verified">("loading");
+
+  const [status, setStatus] = useState<
+    "loading" | "success" | "error" | "already-verified"
+  >("loading");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -18,33 +21,27 @@ export default function AdminVerifyEmailPage() {
       return;
     }
     verifyEmail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const verifyEmail = async () => {
     try {
       const res = await fetch(
-        `https://cityreg.onrender.com/api/auth/admin/verify-email?token=${token}`,
-        {
-          method: "GET",
-        }
+        `https://cityreg.onrender.com/api/auth/admin/verify-email?token=${token}`
       );
       const data = await res.json();
 
       if (res.ok && data.success) {
         setStatus("success");
         setMessage(data.message || "Email verified successfully!");
-        setTimeout(() => {
-          router.push("/admin/login");
-        }, 2000);
+        setTimeout(() => router.push("/admin/login"), 2000);
       } else if (data.alreadyVerified) {
         setStatus("already-verified");
         setMessage(data.message || "Email already verified.");
-        setTimeout(() => {
-          router.push("/admin/login");
-        }, 2000);
+        setTimeout(() => router.push("/admin/login"), 2000);
       } else {
         setStatus("error");
-        setMessage(data.message || "Verification failed");
+        setMessage(data.message || "Verification failed.");
       }
     } catch (err) {
       setStatus("error");
