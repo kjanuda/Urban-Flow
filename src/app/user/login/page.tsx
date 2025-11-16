@@ -1,8 +1,31 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent, KeyboardEvent } from "react";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import Image from 'next/image';
 import headerImage2 from '../../../../public/clm.jpg';
+
+// Add Google Accounts type declarations
+declare global {
+  interface Window {
+    google: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (element: HTMLElement | null, options: {
+            theme: string;
+            size: string;
+            width: number;
+            text: string;
+            shape: string;
+          }) => void;
+        };
+      };
+    };
+  }
+}
 
 export default function UserLoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -46,7 +69,7 @@ export default function UserLoginPage() {
   }, []);
 
   // Handle Google Login
-  const handleGoogleLogin = async (response) => {
+  const handleGoogleLogin = async (response: { credential: string }) => {
     setLoading(true);
     setMsg({ text: "", type: "" });
 
@@ -77,7 +100,7 @@ export default function UserLoginPage() {
   };
 
   // Handle Email/Password Login
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMsg({ text: "", type: "" });
@@ -114,9 +137,9 @@ export default function UserLoginPage() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !loading) {
-      handleSubmit(e);
+      handleSubmit(e as unknown as FormEvent);
     }
   };
 
@@ -141,10 +164,9 @@ export default function UserLoginPage() {
         {/* Content */}
         <div className="relative z-20 flex flex-col justify-between p-8 sm:p-12 lg:p-16 text-white w-full h-full">
           {/* Logo */}
-          
-              <p className="text-sm font-semibold text-gray-300">Urban Flow</p>
-            
-         
+          <div>
+            <p className="text-sm font-semibold text-gray-300">Urban Flow</p>
+          </div>
 
           {/* Main Text */}
           <div className="space-y-4 sm:space-y-6 animate-fadeInUp">
@@ -208,7 +230,7 @@ export default function UserLoginPage() {
           )}
 
           {/* Form */}
-          <div className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Email Input */}
             <div className="group">
               <input
@@ -248,7 +270,7 @@ export default function UserLoginPage() {
 
             {/* Login Button */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="w-full bg-gray-900 text-white py-3 sm:py-4 rounded-lg font-semibold hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-6 sm:mt-8 text-sm sm:text-base shadow-md hover:shadow-lg"
             >
@@ -290,7 +312,7 @@ export default function UserLoginPage() {
                 Click here
               </a>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
