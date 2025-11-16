@@ -1,4 +1,3 @@
-// app/auth/reset-password/page.jsx (or pages/auth/reset-password.jsx for Pages Router)
 "use client";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -13,7 +12,7 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [msg, setMsg] = useState({ text: "", type: "" });
+  const [msg, setMsg] = useState<{ text: string; type: string }>({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -48,7 +47,8 @@ export default function ResetPasswordPage() {
     verifyToken();
   }, [token]);
 
-  const handleSubmit = async (e) => {
+  // ✅ FIXED: Added proper TypeScript event type
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMsg({ text: "", type: "" });
