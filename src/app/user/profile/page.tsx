@@ -4,31 +4,31 @@ import { useState, useEffect, useRef } from 'react';
 import { Upload, MapPin, Loader, AlertCircle, CheckCircle, X, Building2, Phone, Mail, Navigation, Send, Check, User, Map, Camera } from 'lucide-react';
 
 export default function IssueReporter() {
-  const [photo, setPhoto] = useState(null);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState({ lat: null, lng: null, address: '' });
+  const [location, setLocation] = useState<{ lat: number | null; lng: number | null; address: string }>({ lat: null, lng: null, address: '' });
   const [detecting, setDetecting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [officeInfo, setOfficeInfo] = useState(null);
+  const [officeInfo, setOfficeInfo] = useState<any>(null);
   const [loadingOffice, setLoadingOffice] = useState(false);
-  const [selectedOffices, setSelectedOffices] = useState([]);
+  const [selectedOffices, setSelectedOffices] = useState<Array<{ type: string; name: string; email: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [submissionResult, setSubmissionResult] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);
+  const [submissionResult, setSubmissionResult] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [locationInfo, setLocationInfo] = useState(null);
+  const [locationInfo, setLocationInfo] = useState<any>(null);
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraStream, setCameraStream] = useState(null);
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markerRef = useRef(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const GOOGLE_MAPS_API_KEY = 'AIzaSyBGNzHoT1SJCM7J3zvGbxyyiOlsO9ps_H8';
   const OFFICE_FINDER_URL = 'https://cityget.onrender.com';
@@ -73,19 +73,23 @@ export default function IssueReporter() {
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      context.drawImage(videoRef.current, 0, 0);
-      
-      canvasRef.current.toBlob((blob) => {
-        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-        setPhotoFile(file);
-        setPhoto(file);
-        const reader = new FileReader();
-        reader.onloadend = () => setPreview(reader.result);
-        reader.readAsDataURL(file);
-        stopCamera();
-      }, 'image/jpeg');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+            setPhotoFile(file);
+            setPhoto(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setPreview(reader.result as string);
+            reader.readAsDataURL(file);
+            stopCamera();
+          }
+        }, 'image/jpeg');
+      }
     }
   };
 
@@ -128,7 +132,7 @@ export default function IssueReporter() {
             break;
           }
         } catch (err) {
-          console.warn(`❌ Failed to fetch from ${endpoint}:`, err.message);
+          console.warn(`❌ Failed to fetch from ${endpoint}:`, (err as Error).message);
           continue;
         }
       }
@@ -260,12 +264,16 @@ export default function IssueReporter() {
 
     marker.addListener('dragend', () => {
       const pos = marker.getPosition();
-      updateLocation(pos.lat(), pos.lng());
+      if (pos) {
+        updateLocation(pos.lat(), pos.lng());
+      }
     });
 
-    map.addListener('click', (e) => {
-      marker.setPosition(e.latLng);
-      updateLocation(e.latLng.lat(), e.latLng.lng());
+    map.addListener('click', (e: google.maps.MapMouseEvent) => {
+      if (e.latLng) {
+        marker.setPosition(e.latLng);
+        updateLocation(e.latLng.lat(), e.latLng.lng());
+      }
     });
 
     const input = document.createElement('input');
@@ -276,7 +284,7 @@ export default function IssueReporter() {
 
     const searchBox = new window.google.maps.places.SearchBox(input);
     map.addListener('bounds_changed', () => {
-      searchBox.setBounds(map.getBounds());
+      searchBox.setBounds(map.getBounds() as google.maps.LatLngBounds);
     });
 
     searchBox.addListener('places_changed', () => {
@@ -293,13 +301,13 @@ export default function IssueReporter() {
       map.setCenter(place.geometry.location);
       map.setZoom(17);
 
-      updateLocation(lat, lng, place.formatted_address);
+      updateLocation(lat, lng, place.formatted_address || '');
     });
 
     setMapLoaded(true);
   };
 
-  const updateLocation = async (lat, lng, address = '') => {
+  const updateLocation = async (lat: number, lng: number, address = '') => {
     setLocation({ lat, lng, address });
 
     if (!address) {
@@ -323,7 +331,7 @@ export default function IssueReporter() {
     fetchOfficeInfo(lat, lng);
   };
 
-  const fetchOfficeInfo = async (lat, lng) => {
+  const fetchOfficeInfo = async (lat: number, lng: number) => {
     setLoadingOffice(true);
     setOfficeInfo(null);
     setLocationInfo(null);
@@ -363,7 +371,7 @@ export default function IssueReporter() {
     }
   };
 
-  const toggleOfficeSelection = (officeType, officeName, email) => {
+  const toggleOfficeSelection = (officeType: string, officeName: string, email: string) => {
     if (email === "Not available") return;
 
     const officeId = `${officeType}-${email}`;
@@ -376,13 +384,13 @@ export default function IssueReporter() {
     }
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setPhotoFile(file);
       setPhoto(file);
       const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
+      reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
       setError('');
     }
@@ -410,12 +418,12 @@ export default function IssueReporter() {
         }
       );
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       setDetecting(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -498,7 +506,7 @@ export default function IssueReporter() {
       }, 5000);
     } catch (err) {
       console.error('❌ Submission error:', err);
-      setError(err.message || 'Failed to submit report. Please try again.');
+      setError((err as Error).message || 'Failed to submit report. Please try again.');
       setSubmitting(false);
     }
   };
