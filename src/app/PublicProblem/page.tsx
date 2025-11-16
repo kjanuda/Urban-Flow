@@ -97,7 +97,16 @@ export default function ComprehensiveReportsDashboard() {
       }
     } catch (err) {
       console.error('Error:', err);
-      setError(err.message);
+      
+      // Handle the error safely for TypeScript
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === 'string') {
+        setError(err);
+      } else {
+        setError('An unknown error occurred');
+      }
+      
       setReports([]);
     } finally {
       setLoading(false);
@@ -387,54 +396,54 @@ export default function ComprehensiveReportsDashboard() {
   if (!selectedCity) {
     return (
       <div className="min-h-screen bg-gray-50">
-      {/* Header with Background Image */}
-      <div className="relative bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(https://ik.imagekit.io/9dtagplxz/image.png?updatedAt=1763101964714)'}}>
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-        
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8 gap-4">
-            <div className="text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-2 sm:mb-3 drop-shadow-lg">
-                Reports Dashboard
-              </h1>
-              <p className="text-gray-200 text-base sm:text-lg lg:text-xl drop-shadow-md">
-                Monitor and analyze problem areas across regions
-              </p>
+        {/* Header with Background Image */}
+        <div className="relative bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(https://ik.imagekit.io/9dtagplxz/image.png?updatedAt=1763101964714)'}}>
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+          
+          {/* Content */}
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8 gap-4">
+              <div className="text-center sm:text-left">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-2 sm:mb-3 drop-shadow-lg">
+                  Reports Dashboard
+                </h1>
+                <p className="text-gray-200 text-base sm:text-lg lg:text-xl drop-shadow-md">
+                  Monitor and analyze problem areas across regions
+                </p>
+              </div>
+              <BarChart3 className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-white/90 drop-shadow-lg" />
             </div>
-            <BarChart3 className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-white/90 drop-shadow-lg" />
-          </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
-              <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">Total Reports</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
-                {stats.totalReports}
-              </p>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
-              <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">🔴 Active Issues</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
-                {stats.activeIssues}
-              </p>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
-              <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">🟢 Resolved</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
-                {stats.resolvedIssues}
-              </p>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
-              <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">Cities w/ Active Issues</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
-                {stats.citiesAffected}
-              </p>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
+                <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">Total Reports</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
+                  {stats.totalReports}
+                </p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
+                <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">🔴 Active Issues</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
+                  {stats.activeIssues}
+                </p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
+                <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">🟢 Resolved</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
+                  {stats.resolvedIssues}
+                </p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 sm:p-4 lg:p-5 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300 hover:scale-105">
+                <p className="text-gray-200 text-xs sm:text-sm lg:text-base font-medium">Cities w/ Active Issues</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1 sm:mt-2 drop-shadow-lg">
+                  {stats.citiesAffected}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Analytics Section */}
@@ -1440,94 +1449,90 @@ export default function ComprehensiveReportsDashboard() {
                         )}
                       </div>
 
-                      {/* Add Comment Form */}
-                 {/* Add Comment Form */}
-/* Add Comment Form - CORRECTED VERSION */
-<div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-  <h3 className="text-xl font-bold text-black mb-4">
-    Share Your Thoughts
-  </h3>
-  
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-    <div>
-      <label className="block text-sm font-semibold text-black mb-2">
-        Your Name *
-      </label>
-      <input
-        type="text"
-        placeholder="Enter your name"
-        value={publicCommentName[`${report._id}-name`] || ''}
-        onChange={(e) => 
-          setPublicCommentName(prev => ({ 
-            ...prev, 
-            [`${report._id}-name`]: e.target.value 
-          }))
-        }
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-    
-    <div>
-      <label className="block text-sm font-semibold text-black mb-2">
-        Your Email *
-      </label>
-      <input
-        type="email"
-        placeholder="Enter your email"
-        value={publicCommentEmail[`${report._id}-email`] || ''}
-        onChange={(e) => 
-          setPublicCommentEmail(prev => ({ 
-            ...prev, 
-            [`${report._id}-email`]: e.target.value 
-          }))
-        }
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  </div>
-  
-  <div className="mb-4">
-    <label className="block text-sm font-semibold text-black mb-2">
-      Share your thoughts *
-    </label>
-    <textarea
-      placeholder="Write your comment here..."
-      value={publicCommentText[commentKey] || ''}
-      onChange={(e) => 
-        setPublicCommentText(prev => ({ 
-          ...prev, 
-          [commentKey]: e.target.value 
-        }))
-      }
-      rows={3}
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-    />
-  </div>
-  
-  <button
-    onClick={() => submitPublicComment(report._id)}
-    disabled={
-      submittingComment[commentKey] ||
-      !publicCommentText[commentKey]?.trim() ||
-      !publicCommentName[`${report._id}-name`]?.trim() ||
-      !publicCommentEmail[`${report._id}-email`]?.trim()
-    }
-    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white py-2 sm:py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition text-sm"
-  >
-    {submittingComment[commentKey] ? (
-      <>
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span className="text-white">Submitting...</span>
-      </>
-    ) : (
-      <>
-        <Send className="w-4 h-4" />
-        <span className="text-white">Submit Comment</span>
-      </>
-    )}
-  </button>
-
-
+                      {/* Add Comment Form - CORRECTED VERSION */}
+                      <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+                        <h3 className="text-xl font-bold text-black mb-4">
+                          Share Your Thoughts
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-black mb-2">
+                              Your Name *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Enter your name"
+                              value={publicCommentName[`${report._id}-name`] || ''}
+                              onChange={(e) => 
+                                setPublicCommentName(prev => ({ 
+                                  ...prev, 
+                                  [`${report._id}-name`]: e.target.value 
+                                }))
+                              }
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-semibold text-black mb-2">
+                              Your Email *
+                            </label>
+                            <input
+                              type="email"
+                              placeholder="Enter your email"
+                              value={publicCommentEmail[`${report._id}-email`] || ''}
+                              onChange={(e) => 
+                                setPublicCommentEmail(prev => ({ 
+                                  ...prev, 
+                                  [`${report._id}-email`]: e.target.value 
+                                }))
+                              }
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label className="block text-sm font-semibold text-black mb-2">
+                            Share your thoughts *
+                          </label>
+                          <textarea
+                            placeholder="Write your comment here..."
+                            value={publicCommentText[commentKey] || ''}
+                            onChange={(e) => 
+                              setPublicCommentText(prev => ({ 
+                                ...prev, 
+                                [commentKey]: e.target.value 
+                              }))
+                            }
+                            rows={3}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          />
+                        </div>
+                        
+                        <button
+                          onClick={() => submitPublicComment(report._id)}
+                          disabled={
+                            submittingComment[commentKey] ||
+                            !publicCommentText[commentKey]?.trim() ||
+                            !publicCommentName[`${report._id}-name`]?.trim() ||
+                            !publicCommentEmail[`${report._id}-email`]?.trim()
+                          }
+                          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white py-2 sm:py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition text-sm"
+                        >
+                          {submittingComment[commentKey] ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span className="text-white">Submitting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4" />
+                              <span className="text-white">Submit Comment</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>
