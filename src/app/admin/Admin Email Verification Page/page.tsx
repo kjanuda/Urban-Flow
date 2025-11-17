@@ -1,10 +1,10 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
-export default function AdminVerifyEmailPage() {
+// Component that uses useSearchParams
+function VerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -32,14 +32,14 @@ export default function AdminVerifyEmailPage() {
       if (res.ok && data.success) {
         setStatus("success");
         setMessage(data.message || "Email verified successfully!");
-
+        
         setTimeout(() => {
           router.push("/admin/login");
         }, 2000);
       } else if (data.alreadyVerified) {
         setStatus("already-verified");
         setMessage(data.message || "Email already verified.");
-
+        
         setTimeout(() => {
           router.push("/admin/login");
         }, 2000);
@@ -122,7 +122,7 @@ export default function AdminVerifyEmailPage() {
                 Verification Failed
               </h2>
               <p className="text-gray-600 mb-6">{message}</p>
-
+              
               <div className="space-y-3">
                 <button
                   onClick={() => router.push("/admin/login")}
@@ -139,5 +139,30 @@ export default function AdminVerifyEmailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense wrapper
+export default function AdminVerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+        <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
+              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Loading...
+            </h2>
+            <p className="text-gray-600">
+              Please wait a moment...
+            </p>
+          </div>
+        </div>
+      </div>
+    }>
+      <VerificationContent />
+    </Suspense>
   );
 }
