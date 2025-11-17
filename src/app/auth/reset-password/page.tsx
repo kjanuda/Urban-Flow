@@ -135,7 +135,7 @@ function ResetPasswordForm() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h1>
             <p className="text-gray-600 mb-6">{msg.text}</p>
-            
+            <a
               href="/auth/forgot-password"
               className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
             >
