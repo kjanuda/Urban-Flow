@@ -695,7 +695,7 @@ export default function IssueReporter() {
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={submitted || submitting}
                   placeholder="Describe the issue in detail..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm text-gray-900 placeholder-gray-500"
                   rows={4}
                 />
               </div>
