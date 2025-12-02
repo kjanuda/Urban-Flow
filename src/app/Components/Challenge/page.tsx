@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from "next/link";
+
 import { AlertCircle, Database, Users, Handshake, Wifi, Lock, Zap, DollarSign, ChevronDown, ArrowRight } from 'lucide-react';
 
 interface Challenge {
@@ -254,9 +256,11 @@ const Challenges = () => {
                 <p className="text-gray-600 mb-4">
                   Learn more about our comprehensive implementation roadmap and how we address each challenge strategically.
                 </p>
-                <button className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors duration-300">
-                  View Full Roadmap <ArrowRight className="w-4 h-4" />
-                </button>
+                <Link href="/roadmap">
+  <button className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors duration-300">
+    View Full Roadmap <ArrowRight className="w-4 h-4" />
+  </button>
+</Link>
               </div>
             </div>
           </div>

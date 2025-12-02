@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { 
   Menu, 
   X, 
@@ -15,11 +14,12 @@ import {
   Megaphone,
   Users,
   Shield,
-  Globe,
   Battery,
   FileText,
   Award,
-  MessageCircle
+  MessageCircle,
+  AlertCircle,
+  TrendingUp
 } from 'lucide-react';
 
 interface UserData {
@@ -45,6 +45,7 @@ export default function Navbar() {
 
   const profileRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -54,6 +55,9 @@ export default function Navbar() {
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node) && isOpen) {
         setIsOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
       }
     };
 
@@ -107,11 +111,11 @@ export default function Navbar() {
 
   const checkAuthStatus = () => {
     try {
-      const token = localStorage.getItem('token');
-      const adminToken = localStorage.getItem('adminToken');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
 
       if (adminToken) {
-        const adminData = localStorage.getItem('admin');
+        const adminData = typeof window !== 'undefined' ? localStorage.getItem('admin') : null;
         if (adminData) {
           setIsAuthenticated(true);
           setUser(JSON.parse(adminData));
@@ -123,7 +127,7 @@ export default function Navbar() {
       }
 
       if (token) {
-        const userData = localStorage.getItem('user');
+        const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
         if (userData) {
           setIsAuthenticated(true);
           setUser(JSON.parse(userData));
@@ -172,18 +176,22 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('admin');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('admin');
+    }
     setIsAuthenticated(false);
     setUser(null);
     setUserRole(null);
     setProfileOpen(false);
     setImageError(false);
     
-    window.dispatchEvent(new Event('authChange'));
-    window.location.href = '/';
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('authChange'));
+      window.location.href = '/';
+    }
   };
 
   const getInitials = (name?: string) => {
@@ -233,6 +241,23 @@ export default function Navbar() {
     );
   };
 
+  const NavLink = ({ href, icon: Icon, children, onClick }: any) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        if (onClick) {
+          e.preventDefault();
+          onClick();
+        }
+        setIsOpen(false);
+      }}
+      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg mx-2 transition-colors duration-200"
+    >
+      <Icon className="w-5 h-5 flex-shrink-0" />
+      <span className="text-sm font-medium">{children}</span>
+    </a>
+  );
+
   if (!isLoaded) {
     return (
       <nav className={`bg-white sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-lg' : 'shadow-md'}`}>
@@ -252,12 +277,12 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/">
+          <a href="/" className="flex-shrink-0">
             <div className="flex flex-col cursor-pointer">
               <span className="text-xl font-bold text-gray-800 leading-5">Urban Flow</span>
               <span className="text-xs text-gray-500 font-medium">Smart Cities</span>
             </div>
-          </Link>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
@@ -269,14 +294,14 @@ export default function Navbar() {
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
               </button>
               <div className="absolute left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left">
-                <Link href="/mission" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
+                <a href="/mission" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
                   <Award className="w-4 h-4" />
                   <span>Our Mission</span>
-                </Link>
-                <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
+                </a>
+                <a href="/about" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
                   <Users className="w-4 h-4" />
                   <span>Our Team</span>
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -288,18 +313,18 @@ export default function Navbar() {
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
               </button>
               <div className="absolute left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left">
-                <Link href="/solutions/smart-cities" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
+                <a href="/solutions/smart-cities" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
                   <Building2 className="w-4 h-4" />
                   <span>Smart Cities</span>
-                </Link>
-                <Link href="/solutions/energy" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                </a>
+                <a href="/solutions/energy" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                   <Battery className="w-4 h-4" />
                   <span>Energy Solutions</span>
-                </Link>
-                <Link href="/solutions/infrastructure" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
+                </a>
+                <a href="/solutions/infrastructure" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
                   <Settings className="w-4 h-4" />
                   <span>Infrastructure</span>
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -311,23 +336,35 @@ export default function Navbar() {
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
               </button>
               <div className="absolute left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left">
-                <Link href="/advocacy/policy" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
+                <a href="/advocacy/policy" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
                   <FileText className="w-4 h-4" />
                   <span>Policy & Reform</span>
-                </Link>
-                <Link href="/advocacy/campaigns" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                </a>
+                <a href="/advocacy/campaigns" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                   <Megaphone className="w-4 h-4" />
                   <span>Campaigns</span>
-                </Link>
-                <Link href="/advocacy/community" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
+                </a>
+                <a href="/advocacy/community" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
                   <MessageCircle className="w-4 h-4" />
                   <span>Community</span>
-                </Link>
+                </a>
               </div>
             </div>
 
+            {/* REPORT DASHBOARD - NEW */}
+            <a 
+              href="/PublicProblem" 
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 rounded-lg hover:bg-blue-50 group"
+            >
+              <AlertCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              REPORTS
+              <span className="ml-1 px-2 py-0.5 bg-red-100 text-red-600 text-xs font-semibold rounded-full">
+                Live
+              </span>
+            </a>
+
             {/* Search */}
-            <div className="relative">
+            <div className="relative" ref={searchRef}>
               <button 
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="p-2 text-gray-500 hover:text-blue-600 transition-all duration-200 rounded-lg hover:bg-blue-50"
@@ -385,30 +422,30 @@ export default function Navbar() {
 
                     {/* Links */}
                     <div className="py-2">
-                      <Link
+                      <a
                         href={getProfileLink()}
                         onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                       >
                         <User className="w-4 h-4" />
                         <span>My Profile</span>
-                      </Link>
-                      <Link
+                      </a>
+                      <a
                         href={getDashboardLink()}
                         onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                       >
                         <LayoutDashboard className="w-4 h-4" />
                         <span>Dashboard</span>
-                      </Link>
-                      <Link
+                      </a>
+                      <a
                         href={getSettingsLink()}
                         onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
-                      </Link>
+                      </a>
                     </div>
 
                     {/* Logout */}
@@ -432,14 +469,14 @@ export default function Navbar() {
                   <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
                 </button>
                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link href="/user/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
+                  <a href="/user/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition">
                     <User className="w-4 h-4" />
                     <span>User Login</span>
-                  </Link>
-                  <Link href="/admin/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
+                  </a>
+                  <a href="/admin/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition">
                     <Shield className="w-4 h-4" />
                     <span>Admin Login</span>
-                  </Link>
+                  </a>
                 </div>
               </div>
             )}
@@ -456,11 +493,11 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div ref={mobileMenuRef} className="lg:hidden py-4 border-t border-gray-200 bg-white">
+          <div ref={mobileMenuRef} className="lg:hidden py-4 border-t border-gray-200 bg-white max-h-[calc(100vh-4rem)] overflow-y-auto">
             {/* Search Bar */}
             <div className="px-4 mb-4">
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-                <Search className="w-4 h-4 text-gray-400" />
+                <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -471,22 +508,61 @@ export default function Navbar() {
 
             {/* Navigation Links */}
             <div className="space-y-1">
-              <div className="px-4 py-2 font-semibold text-gray-500 text-sm">NAVIGATION</div>
+              <div className="px-4 py-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">Navigation</div>
               
-              <Link href="/about/mission" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                <Building2 className="w-5 h-5" />
-                <span>About Us</span>
-              </Link>
+              <NavLink href="/mission" icon={Award}>
+                Our Mission
+              </NavLink>
               
-              <Link href="/solutions/smart-cities" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                <Lightbulb className="w-5 h-5" />
-                <span>Solutions</span>
-              </Link>
+              <NavLink href="/about" icon={Users}>
+                Our Team
+              </NavLink>
               
-              <Link href="/advocacy/policy" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                <Megaphone className="w-5 h-5" />
-                <span>Advocacy</span>
-              </Link>
+              <NavLink href="/solutions/smart-cities" icon={Building2}>
+                Smart Cities
+              </NavLink>
+              
+              <NavLink href="/solutions/energy" icon={Battery}>
+                Energy Solutions
+              </NavLink>
+              
+              <NavLink href="/solutions/infrastructure" icon={Settings}>
+                Infrastructure
+              </NavLink>
+              
+              <NavLink href="/advocacy/policy" icon={FileText}>
+                Policy & Reform
+              </NavLink>
+              
+              <NavLink href="/advocacy/campaigns" icon={Megaphone}>
+                Campaigns
+              </NavLink>
+              
+              <NavLink href="/advocacy/community" icon={MessageCircle}>
+                Community
+              </NavLink>
+            </div>
+
+            {/* Report Dashboard - Highlighted */}
+            <div className="mt-4 px-4">
+              <a 
+                href="/PublicProblem"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-lg hover:shadow-md transition-all duration-200 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Report Dashboard</div>
+                    <div className="text-xs text-gray-600">View public problems</div>
+                  </div>
+                </div>
+                <div className="px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded-full">
+                  Live
+                </div>
+              </a>
             </div>
 
             {/* Authentication Section */}
@@ -494,11 +570,11 @@ export default function Navbar() {
               {isAuthenticated ? (
                 <>
                   <div className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                       <ProfileAvatar size="lg" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800">{user?.name}</div>
-                        <div className="text-sm text-gray-500">{user?.email}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-800 truncate">{user?.name}</div>
+                        <div className="text-sm text-gray-500 truncate">{user?.email}</div>
                         <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                           <Shield className="w-3 h-3" />
                           {userRole === 'admin' ? 'Administrator' : 'Verified Member'}
@@ -508,38 +584,42 @@ export default function Navbar() {
                   </div>
                   
                   <div className="space-y-1 mt-2">
-                    <Link href={getProfileLink()} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                      <User className="w-5 h-5" />
-                      <span>My Profile</span>
-                    </Link>
-                    <Link href={getDashboardLink()} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                      <LayoutDashboard className="w-5 h-5" />
-                      <span>Dashboard</span>
-                    </Link>
-                    <Link href={getSettingsLink()} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                      <Settings className="w-5 h-5" />
-                      <span>Settings</span>
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg mx-2 transition w-full text-left"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      <span>Sign Out</span>
-                    </button>
+                    <div className="px-4 py-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">Account</div>
+                    
+                    <NavLink href={getProfileLink()} icon={User}>
+                      My Profile
+                    </NavLink>
+                    
+                    <NavLink href={getDashboardLink()} icon={LayoutDashboard}>
+                      Dashboard
+                    </NavLink>
+                    
+                    <NavLink href={getSettingsLink()} icon={Settings}>
+                      Settings
+                    </NavLink>
+                    
+                    <div className="px-2 pt-2">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 w-full"
+                      >
+                        <LogOut className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm font-medium">Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="px-4 py-2 font-semibold text-gray-500 text-sm">ACCOUNT</div>
-                  <Link href="/user/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                    <User className="w-5 h-5" />
-                    <span>User Login</span>
-                  </Link>
-                  <Link href="/admin/login" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg mx-2 transition">
-                    <Shield className="w-5 h-5" />
-                    <span>Admin Login</span>
-                  </Link>
+                  <div className="px-4 py-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">Account</div>
+                  
+                  <NavLink href="/user/login" icon={User}>
+                    User Login
+                  </NavLink>
+                  
+                  <NavLink href="/admin/login" icon={Shield}>
+                    Admin Login
+                  </NavLink>
                 </>
               )}
             </div>

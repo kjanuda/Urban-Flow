@@ -95,7 +95,7 @@ const Footer = () => {
                 <p className="mt-1">
                   Transforming urban governance through citizen engagement.{' '}
                   <a href="#" className="hover:text-white transition-colors">
-                    Visit our website
+                    
                   </a>
                 </p>
               </div>
@@ -104,7 +104,7 @@ const Footer = () => {
             {/* Right - Legal Links */}
             <div className="flex flex-wrap gap-4 text-xs text-gray-400">
               <p>
-                Project, Idea & Design by h{' '}
+                Project, Idea & Design by {' '}
                 <a href="https://kjanuda.netlify.app/" className="text-white hover:text-gray-300 transition-colors font-medium">
                   Januda J Kodithuwakku
                 </a>

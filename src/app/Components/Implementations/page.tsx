@@ -104,7 +104,7 @@ const Implementations = () => {
     <div
       className="min-h-screen"
       style={{
-        backgroundImage: 'url(/clm2.jpg)',
+        backgroundImage: 'url(/clm1.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',

@@ -16,7 +16,7 @@ export default function Page() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const headerImages = useMemo(() => [headerImage, headerImage1,headerImage2], []);
+  const headerImages = useMemo(() => [headerImage, headerImage1, headerImage2], []);
 
   // Memoized navigation items
   const navItems = useMemo(() => [
@@ -207,11 +207,8 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Benefits Section - NO wrapper div, NO padding, NO margin */}
-      
+    
 
-      {/* Definition Section */}
-      
     </div>
   );
 }

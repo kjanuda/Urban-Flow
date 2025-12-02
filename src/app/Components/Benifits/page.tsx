@@ -163,12 +163,16 @@ function Benefits() {
         {/* Call to Action */}
         <div className="mt-16 text-center">
           <div className="inline-flex flex-col sm:flex-row gap-4">
-            <button className="px-8 py-4 bg-cyan-500 text-white font-semibold rounded-xl hover:bg-cyan-600 transition-colors duration-300">
-              Get Started Today
-            </button>
-            <button className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-300 border-2 border-gray-300">
-              Learn More
-            </button>
+          <a href="/user/login">
+  <button className="px-8 py-4 bg-cyan-500 text-white font-semibold rounded-xl hover:bg-cyan-600 transition-colors duration-300">
+    Get Started Today
+  </button>
+</a>
+<a href="/user/login">
+  <button className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-300 border-2 border-gray-300">
+    Learn More
+  </button>
+</a>
           </div>
         </div>
       </div>
